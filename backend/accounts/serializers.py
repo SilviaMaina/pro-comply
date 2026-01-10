@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from.models import Engineer
+from.models import Engineer, UserProfile
 from django.contrib.auth import authenticate
 
 class EngineerRegistrationSerializer(serializers.ModelSerializer):
@@ -37,3 +37,32 @@ class EngineerLoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("This account is inactive.")
         data['engineer'] = engineer
         return data
+    
+class UserProfileSerilizer(serializers.ModelSerializer):
+    engineer_email = serializers.ReadOnlyField(source='engineer.email')    
+    engineer_name = serializers.SerializerMethodField()
+    pdu_units_remaining = serializers.ReadOnlyField()
+    license_status =serializers.ReadOnlyField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'id',
+            'engineer_email',
+            'engineer_name',
+            'phone_number',
+            'national_id',
+            'license_expiry_date',
+            'pdu_units_earned',
+            'pdu_units_required',
+            'pdu_units_remaining',
+            'license_status',
+            'created_at',
+            'updated_at'
+
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at' ]
+
+    def get_engineer_name(self, obj):
+        return f"{obj.engineer.first_name} {obj.engineer.last_name}"    
+
