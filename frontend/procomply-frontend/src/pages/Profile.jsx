@@ -1,4 +1,4 @@
-// src/pages/Profile.jsx
+
 import { useState, useEffect } from 'react';
 import client from '../api/client';
 
@@ -132,10 +132,7 @@ export default function Profile() {
               <span className="text-sm text-gray-500">Email</span>
               <p>{profile.engineer_email}</p>
             </div>
-            <div>
-              <span className="text-sm text-gray-500">EBK Registration</span>
-              <p>{/* You'll need to add this to your serializer */}</p>
-            </div>
+           
             <div>
               <span className="text-sm text-gray-500">Phone</span>
               <p>{profile.phone_number || 'Not set'}</p>

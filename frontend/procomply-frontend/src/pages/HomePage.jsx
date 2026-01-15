@@ -24,12 +24,12 @@ export default function HomePage() {
     fetchProfile();
   }, []);
 
-  // ✅ Handle loading
+ 
   if (loading) {
     return <div className="p-8 text-center">Loading your dashboard...</div>;
   }
 
-  // ✅ Handle error or missing profile
+ 
   if (error || !profile) {
     return (
       <div className="p-8 text-center text-red-500">
@@ -41,7 +41,7 @@ export default function HomePage() {
     );
   }
 
-  // ✅ Only render profile data when it exists
+ 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>

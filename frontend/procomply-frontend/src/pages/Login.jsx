@@ -12,13 +12,18 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    try {
-      const res = await client.post('/login/', { email, password });
+   try {
+     
+      await login(email, password);
+      
+      
       navigate('/home');
     } catch (err) {
-      setError('Invalid email or password');
+      
+      setError('Invalid email or password. Please try again.');
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">

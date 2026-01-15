@@ -31,9 +31,18 @@ export function AuthProvider({ children }) {
 
 
   const login = async (email, password) => {
-    const res = await client.post('/login/', { email, password });
+    try{
+     const res = await client.post('/login/', { email, password });
     localStorage.setItem('accessToken', res.data.access);
+    console.log('accessToken:', res.data.access);
     setIsAuthenticated(true);
+    console.log("Login successful, token stored.");
+
+    }catch(err){
+      console.error("Login failed:", err.response?.data);
+      throw new Error('Invalid credentials');
+    }
+    
   };
 
   const logout = () => {
