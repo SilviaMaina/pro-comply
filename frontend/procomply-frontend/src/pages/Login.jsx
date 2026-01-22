@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuthstore } from '../context/useAuthstore';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, error:storeError } = useAuthstore();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,11 +16,10 @@ export default function Login() {
      
       await login(email, password);
       
-      
       navigate('/home');
     } catch (err) {
       
-      setError('Invalid email or password. Please try again.');
+      setError(err.message);
     }
   };
 

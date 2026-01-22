@@ -1,35 +1,22 @@
 import { useState, useEffect } from 'react';
-import client from '../api/client';
+import { useProfileStore } from '../context/UseProfileStore';
+
 
 export default function HomePage() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
+  const { profile, loading, error, fetchProfile } = useProfileStore();
+ 
+   
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await client.get('/profile/');
-        setProfile(res.data);
-        setError(null);
-      } catch (err) {
-        console.error('Failed to load profile:', err);
-        setError('Unable to load profile. Please log in again.');
-        setProfile(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!profile && !loading) {
+      fetchProfile();
+    }
+  }, [profile, loading, fetchProfile]);
+    
 
-    fetchProfile();
-  }, []);
+    if (loading) {
+      return <div className="p-8 text-center">Loading your dashboard...</div>;
+    }
 
- 
-  if (loading) {
-    return <div className="p-8 text-center">Loading your dashboard...</div>;
-  }
-
- 
   if (error || !profile) {
     return (
       <div className="p-8 text-center text-red-500">
@@ -40,6 +27,8 @@ export default function HomePage() {
       </div>
     );
   }
+
+  
 
  
   return (

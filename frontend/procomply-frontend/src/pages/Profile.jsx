@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import client from '../api/client';
+import { useProfileStore } from '../context/UseProfileStore';
+
 
 export default function Profile() {
   const [profile, setProfile] = useState(null);
@@ -10,24 +11,22 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await client.get('/profile/');
-        setProfile(res.data);
-        setFormData({
-          phone_number: res.data.phone_number || '',
-          national_id: res.data.national_id || '',
-          license_expiry_date: res.data.license_expiry_date || '',
-          pdu_units_earned: res.data.pdu_units_earned || 0,
-        });
-      } catch (err) {
-        console.error('Failed to load profile');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, []);
+    if (profile) {
+      setFormData({
+        phone_number: profile.phone_number || '',
+        national_id: profile.national_id || '',
+        license_expiry_date: profile.license_expiry_date || '',
+        pdu_units_earned: profile.pdu_units_earned || 0,
+      });
+    }
+  }, [profile]);
+
+  // Fetch profile if not loaded
+  useEffect(() => {
+    if (!profile && !loading) {
+      fetchProfile();
+    }
+  }, [profile, loading, fetchProfile]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -35,19 +34,17 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
     try {
-      const res = await client.put('/profile/', formData);
-      setProfile(res.data);
+      await updateProfile(formData);
       setEditMode(false);
     } catch (err) {
-      alert('Failed to update profile');
-    } finally {
-      setSaving(false);
+      // Error is already handled in store
     }
   };
 
-  if (loading) return <div className="p-8">Loading profile...</div>;
+  if (loading && !profile) return <div className="p-8">Loading profile...</div>;
+  if (error) return <div className="p-8 text-red-500">{error}</div>;
+  if (!profile) return <div className="p-8">No profile data.</div>;
 
   return (
     <div className="p-6 max-w-2xl">
@@ -107,10 +104,9 @@ export default function Profile() {
           <div className="flex space-x-3">
             <button
               type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              Save Changes
             </button>
             <button
               type="button"
@@ -132,7 +128,6 @@ export default function Profile() {
               <span className="text-sm text-gray-500">Email</span>
               <p>{profile.engineer_email}</p>
             </div>
-           
             <div>
               <span className="text-sm text-gray-500">Phone</span>
               <p>{profile.phone_number || 'Not set'}</p>

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from cloudinary.models import CloudinaryField
 
 # Create your models here.
 class EngineerManager(BaseUserManager):
@@ -53,6 +54,7 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='profile'
     )
+   
     phone_number = models.CharField(max_length=13, blank=True, null=True)
     national_id = models.CharField(max_length=8, blank=True, null=True)
     license_expiry_date = models.DateField(blank=True, null=True)
