@@ -54,11 +54,22 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='profile'
     )
-   
+    profile_photo = CloudinaryField(
+        'image',
+        folder='profile_photos/',
+        blank=True,
+        null=True,
+        transformation={
+            'width': 300,
+            'height': 300,
+            'crop': 'fill',
+            'gravity': 'face'
+        }
+    )
     phone_number = models.CharField(max_length=13, blank=True, null=True)
     national_id = models.CharField(max_length=8, blank=True, null=True)
     license_expiry_date = models.DateField(blank=True, null=True)
-
+    engineering_specialization = models.CharField(max_length=100, blank=True, null=True)
     #PDU units tracking
     pdu_units_earned = models.PositiveIntegerField(default=0)
     pdu_units_required = models.PositiveIntegerField(default=60)

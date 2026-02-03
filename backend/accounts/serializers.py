@@ -50,6 +50,8 @@ class UserProfileSerilizer(serializers.ModelSerializer):
             'id',
             'engineer_email',
             'engineer_name',
+            'profile_photo',
+            'engineering_specialization',
             'phone_number',
             'national_id',
             'license_expiry_date',

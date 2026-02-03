@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthLayout from './components/AuthLayout';
+import Navbar from './components/Navbar';
 
 export default function App() {
   return (
@@ -19,18 +20,19 @@ export default function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/home" element={<HomePage />} />
+          
 
           {/* Protected routes */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
+                <Navbar/>
                 <AuthLayout />
               </ProtectedRoute>
             }
           >
-            
+            <Route path="/home" element={<HomePage />} /> 
             <Route path="/profile" element={<Profile />} />
             {/* Add more protected routes here as needed */}
           </Route>

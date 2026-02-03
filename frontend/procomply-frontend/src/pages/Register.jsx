@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuthstore } from '../context/useAuthstore';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -12,7 +12,7 @@ export default function Register() {
     password2: '',
   });
   const [error, setError] = useState('');
-  const { register } = useAuth();
+  const { register } = useAuthstore();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
