@@ -1,139 +1,127 @@
-// import {create} from 'zustand';
-// import client from '../api/client';
-
-// export const useAuthstore = create((set) => ({
-//   isAuthenticated: false,
-//   user:null,
-//   loading:false,
-//   error:null,
-
-//   login: async (email, password) => {
-//     set({loading:true, error:null});
-//     try {
-//       const res =await client.post('/login/', {email, password});
-//       const {engineer, access} = res.data;
-//       localStorage.setItem('access_token', access);
-
-//       set({
-//         isAuthenticated:true,
-//         user:engineer,
-//         loading:false,
-//       });
-//       console.log('Login successful:', res.data);
-//     }catch (error) {
-//       const message = error.response?.data?.detail || 'Login failed';
-//       set({ error:message, loading:false});
-//       throw new Error(message);
-//     }
-//   },
-//   register: async (userData) => {
-//     set({loading:true, error:null});
-//     try {
-//       await client.post('/register/', userData);
-//       set({loading:false});
-//     } catch (error) {
-//       const message = error.response?.data || 'Registration failed';
-//       set({ error:message, loading:false});
-//       throw new Error(message);
-//     }
-//   },
-//   checkAuth: async () => {
-//     const token = localStorage.getItem('access_token');
-//     if (!token) {
-//       set({ isAuthenticated:false, user:null});
-//       return;
-//     }
-//     set({loading:true});
-//     try {
-//       const res = await client.get('/profile/');
-//       set({
-//         isAuthenticated:true,
-//         user:res.data.engineer,
-//         loading:false,
-//       });
-//     } catch (error) {
-//       console.warn('Token invalid or expired', error);
-//       localStorage.removeItem('access_token');
-//       set({ isAuthenticated:false, user:null, loading:false});
-
-//     }
-//   },
-//   logout: () => {
-//     localStorage.removeItem('access_token');
-//     set({ isAuthenticated:false, user:null});
-//   },
-
-
-// }));
-
-
-
 import { create } from 'zustand';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { auth } from '../lib/firebase'; 
 import client from '../api/client';
 
-
 export const useAuthstore = create((set) => ({
-  isAuthenticated: false, 
-   user: null, 
-   loading: false, 
-   error: null,
+  user: null,
+  loading: true,
+  error: null,
 
-  login: async (email, password) => { 
-       set({ loading: true, error: null });   
-     try {    
-        const res = await client.post('/login/', { email, password });   
-        const { token, engineer } = res.data;    
-        localStorage.setItem('accessToken', token.access);     
-        localStorage.setItem('refreshToken', token.refresh);    
-        set({       
-         isAuthenticated: true,
-         user: engineer,
-         loading: false,
-        });
-        console.log('Login successful:', res.data);
-      }catch (error) {    
-        const message = error.response?.data?.detail || 'Login failed';    
-        set({ error: message, loading: false });    
-        throw new Error(message);   
+  // Initialize auth state listener
+  initializeAuth: () => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Get Firebase token and save it
+          const token = await firebaseUser.getIdToken();
+          localStorage.setItem('firebaseToken', token);
+          
+          // Sync with Django backend
+          await client.post('/accounts/sync-firebase/', {
+            firebase_uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName || ''
+          });
+          
+          set({ user: firebaseUser, loading: false, error: null });
+        } catch (error) {
+          console.error('Auth sync error:', error);
+          set({ user: firebaseUser, loading: false, error: error.message });
+        }
+      } else {
+        localStorage.removeItem('firebaseToken');
+        set({ user: null, loading: false, error: null });
       }
-    },
-    register: async (userData) => { 
-       set({ loading: true, error: null });
-       try {
-        await client.post('/register/', userData);
-        set({ loading: false });
-      } catch (error) {
-        const message = error.response?.data || 'Registration failed';
-        set({ error: message, loading: false });
-        throw new Error(message);
-      }
-    },
-    checkAuth: async () => { 
-       const token = localStorage.getItem('accessToken');
-       //Match client.js
-        if (!token) {
-        set({ isAuthenticated: false, user: null });
-        return;
-      }
-      set({ loading: true });
-      try {
-        const res = await client.get('/profile/');
-        set({
-          isAuthenticated: true,
-          user: res.data,
-          loading: false,
-        });
-      } catch (error) {
-        console.warn('Token invalid or expired', error);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        set({ isAuthenticated: false, user: null, loading: false });
-      }
-    },
-    logout: () => { 
-       localStorage.removeItem('accessToken');
-       localStorage.removeItem('refreshToken');
-       set({ isAuthenticated: false, user: null });
-    },
-}));  
-         
+    });
+    
+    return unsubscribe;
+  },
+
+  register: async (email, password) => {
+    set({ loading: true, error: null });
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      localStorage.setItem('firebaseToken', token);
+      
+      // Sync with backend
+      await client.post('/accounts/sync-firebase/', {
+        firebase_uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        name: userCredential.user.displayName || ''
+      });
+      
+      set({ user: userCredential.user, loading: false });
+      return userCredential.user;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+
+  login: async (email, password) => {
+    set({ loading: true, error: null });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      localStorage.setItem('firebaseToken', token);
+      
+      // Sync with backend
+      await client.post('/accounts/sync-firebase/', {
+        firebase_uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        name: userCredential.user.displayName || ''
+      });
+      
+      set({ user: userCredential.user, loading: false });
+      return userCredential.user;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+
+  loginWithGoogle: async () => {
+    set({ loading: true, error: null });
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const token = await result.user.getIdToken();
+      localStorage.setItem('firebaseToken', token);
+      
+      // Sync with backend
+      await client.post('/accounts/sync-firebase/', {
+        firebase_uid: result.user.uid,
+        email: result.user.email,
+        name: result.user.displayName || ''
+      });
+      
+      set({ user: result.user, loading: false });
+      return result.user;
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem('firebaseToken');
+      set({ user: null, error: null });
+    } catch (error) {
+      set({ error: error.message });
+      throw error;
+    }
+  },
+
+  clearError: () => set({ error: null })
+}));

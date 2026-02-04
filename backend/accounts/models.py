@@ -21,11 +21,14 @@ class EngineerManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 class Engineer(AbstractBaseUser, PermissionsMixin):
+    firebase_uid = models.CharField(max_length=128, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     ebk_registration_number = models.CharField(
         max_length=20,
+        null=True,
+        blank=True,
         unique=True,
         validators=[RegexValidator(
             regex=r'^EBK\/[0-9]{4}\/[0-9]{4,6}$', 
@@ -42,7 +45,7 @@ class Engineer(AbstractBaseUser, PermissionsMixin):
 
     objects = EngineerManager()
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'ebk_registration_number']
+    REQUIRED_FIELDS = ['first_name', 'last_name', ]
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"

@@ -1,18 +1,19 @@
 // src/components/AuthLayout.jsx
-import React from 'react';
-import { useAuth } from '../context/AuthContext';
-import { Outlet } from 'react-router-dom'; // ✅ Use Outlet for nested routes
-import Navbar from './Navbar';
+import { Outlet } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
 export default function AuthLayout() {
-  const { logout } = useAuth();
-
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      <Navbar onLogout={logout} />
-      <div className="ml-0 md:ml-64 flex-1 p-6">
-        <Outlet /> {/* ✅ This renders child routes (HomePage, Profile, etc.) */}
-      </div>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar />
+      
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-6 lg:p-8">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 }

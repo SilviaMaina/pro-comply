@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import RegisterEngineerView, LoginEngineerView, ProfileView
+from .views import ProfileView, EngineerDetailView, sync_firebase_user, test_auth
 
 urlpatterns = [
-    path('register/', RegisterEngineerView.as_view(), name='register_engineer'),
-    path('login/', LoginEngineerView.as_view(), name='login_engineer'),
-    path('profile/', ProfileView.as_view(),name='profile')
+    path('sync-firebase/', sync_firebase_user, name='sync-firebase'),
+    path('test-auth/', test_auth, name='test-auth'),
+    path('engineer/', EngineerDetailView.as_view(), name='engineer-detail'),  # New
+    path('profile/', ProfileView.as_view(), name='profile'),
 ]
