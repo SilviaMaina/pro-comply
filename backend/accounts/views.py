@@ -9,6 +9,8 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
 from .models import UserProfile
 from .serializers import UserProfileSerializer, EngineerSerializer
+from .service.email_service import send_welcome_email
+
 import json
 import logging
 
@@ -154,6 +156,8 @@ class ProfileView(APIView):
         """Helper method to update profile (handles both Engineer and UserProfile)"""
         try:
             profile, created = UserProfile.objects.get_or_create(engineer=request.user)
+
+            
             serializer = UserProfileSerializer(
                 profile,
                 data=request.data,
@@ -162,6 +166,7 @@ class ProfileView(APIView):
             
             if serializer.is_valid():
                 serializer.save()
+                
                 logger.info(f"Profile updated by: {request.user.email}")
                 return Response({
                     'status': 'success',
@@ -180,3 +185,38 @@ class ProfileView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_profile_photo(request):
+    """Delete profile photo"""
+    try:
+        profile = UserProfile.objects.get(engineer=request.user)
+        
+        if profile.profile_photo:
+            # Delete from Cloudinary
+            profile.profile_photo.delete()
+            profile.save()
+            
+            logger.info(f"Profile photo deleted for {request.user.email}")
+            
+            return Response({
+                'status': 'success',
+                'message': 'Profile photo deleted successfully'
+            })
+        else:
+            return Response(
+                {'error': 'No profile photo to delete'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+    except UserProfile.DoesNotExist:
+        return Response(
+            {'error': 'Profile not found'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error deleting profile photo: {str(e)}")
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )    

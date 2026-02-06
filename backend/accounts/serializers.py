@@ -2,19 +2,19 @@ from rest_framework import serializers
 from .models import Engineer, UserProfile
 from django.contrib.auth import authenticate
 
+
 class EngineerSerializer(serializers.ModelSerializer):
-    """Serializer for Engineer (auth user) model"""
     class Meta:
         model = Engineer
         fields = ['id', 'email', 'first_name', 'last_name', 'ebk_registration_number', 'date_joined']
-        read_only_fields = ['id', 'email', 'date_joined']  # Email shouldn't be changed after registration
+        read_only_fields = ['id', 'email', 'date_joined']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for UserProfile (extended info) model"""
     engineer_email = serializers.ReadOnlyField(source='engineer.email')    
     engineer_name = serializers.SerializerMethodField()
     engineer_id = serializers.ReadOnlyField(source='engineer.id')
+    profile_photo_url = serializers.SerializerMethodField()
     
     # Include Engineer editable fields
     first_name = serializers.CharField(source='engineer.first_name', required=False)
@@ -37,6 +37,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'ebk_registration_number',
             # Profile fields
             'profile_photo',
+            'profile_photo_url',
             'engineering_specialization',
             'phone_number',
             'national_id',
@@ -48,13 +49,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['id', 'engineer_id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'engineer_id', 'created_at', 'updated_at', 'profile_photo_url']
 
     def get_engineer_name(self, obj):
         return f"{obj.engineer.first_name} {obj.engineer.last_name}"
     
+    def get_profile_photo_url(self, obj):
+        if obj.profile_photo:
+            return obj.profile_photo.url
+        return None
+    
     def update(self, instance, validated_data):
-        """Update both Engineer and UserProfile fields"""
         # Extract Engineer fields if present
         engineer_data = {}
         if 'engineer' in validated_data:
@@ -67,7 +72,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
                 setattr(engineer, attr, value)
             engineer.save()
         
-        # Update UserProfile fields
+        # Update UserProfile fields (including profile_photo if uploaded)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

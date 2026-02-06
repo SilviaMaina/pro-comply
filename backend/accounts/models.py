@@ -97,3 +97,5 @@ class UserProfile(models.Model):
             return "Expiring Soon"
         else:
             return "Valid"
+
+            

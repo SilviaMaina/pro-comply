@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useProfileStore } from '../context/UseProfileStore';
+import { Camera, Upload, X, User, Loader } from 'lucide-react';
+import client from '../api/client';
 
 export default function Profile() {
   const { 
@@ -12,6 +14,9 @@ export default function Profile() {
   
   const [formData, setFormData] = useState({});
   const [editMode, setEditMode] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Fetch profile on mount
   useEffect(() => {
@@ -22,17 +27,16 @@ export default function Profile() {
   useEffect(() => {
     if (profile) {
       setFormData({
-        // Engineer fields
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         ebk_registration_number: profile.ebk_registration_number || '',
-        // Profile fields
         phone_number: profile.phone_number || '',
         national_id: profile.national_id || '',
         license_expiry_date: profile.license_expiry_date || '',
         engineering_specialization: profile.engineering_specialization || '',
         pdu_units_earned: profile.pdu_units_earned || 0,
       });
+      setPhotoPreview(profile.profile_photo_url);
     }
   }, [profile]);
 
@@ -40,46 +44,98 @@ export default function Profile() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validate EBK format if changed
-    if (formData.ebk_registration_number) {
-      const ebkRegex = /^EBK\/[0-9]{4}\/[0-9]{4,6}$/;
-      if (!ebkRegex.test(formData.ebk_registration_number)) {
-        alert('EBK number must be in format: EBK/YYYY/XXXXX');
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
         return;
       }
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
+        return;
+      }
+
+      setPhotoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemovePhoto = async () => {
+    if (window.confirm('Are you sure you want to remove your profile photo?')) {
+      try {
+        await client.delete('/accounts/profile/photo/delete/');
+        setPhotoPreview(null);
+        setPhotoFile(null);
+        await fetchProfile();
+      } catch (error) {
+        console.error('Error removing photo:', error);
+        alert('Failed to remove photo');
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setUploadingPhoto(true);
     
     try {
-      await updateProfile(formData);
+      // Create FormData for file upload
+      const submitData = new FormData();
+      
+      // Add all form fields
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== '') {
+          submitData.append(key, formData[key]);
+        }
+      });
+      
+      // Add photo if selected
+      if (photoFile) {
+        submitData.append('profile_photo', photoFile);
+      }
+
+      await updateProfile(submitData);
       setEditMode(false);
+      setPhotoFile(null);
+      await fetchProfile();
     } catch (err) {
       console.error('Update failed:', err);
+      alert('Failed to update profile');
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
   if (loading && !profile) {
     return (
-      <div className="p-8 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
-  if (error) {
+  if (error && !profile) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <p className="text-red-800">{error}</p>
+          <button
+            onClick={fetchProfile}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg"
+          >
+            Retry
+          </button>
         </div>
-        <button 
-          onClick={fetchProfile}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-        >
-          Retry
-        </button>
       </div>
     );
   }
@@ -89,9 +145,10 @@ export default function Profile() {
   }
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">My Profile</h1>
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
         {!editMode && (
           <button
             onClick={() => setEditMode(true)}
@@ -104,9 +161,64 @@ export default function Profile() {
 
       {editMode ? (
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Profile Photo Upload */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Photo</h2>
+            
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              {/* Photo Preview */}
+              <div className="relative">
+                <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                  {photoPreview ? (
+                    <img 
+                      src={photoPreview} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="w-16 h-16 text-gray-400" />
+                  )}
+                </div>
+                {photoPreview && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Upload Controls */}
+              <div className="flex-1">
+                <label className="cursor-pointer">
+                  <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition w-fit">
+                    <Camera className="w-5 h-5 text-gray-600" />
+                    <span className="text-gray-700">Choose Photo</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
+                </label>
+                <p className="text-sm text-gray-500 mt-2">
+                  JPG, PNG or GIF. Max size 5MB.
+                </p>
+                {photoFile && (
+                  <p className="text-sm text-green-600 mt-2">
+                    ✓ New photo selected
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Engineer Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
               Engineer Information
             </h2>
             
@@ -150,13 +262,12 @@ export default function Profile() {
                 placeholder="EBK/2020/12345"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">Format: EBK/YYYY/XXXXX</p>
             </div>
           </div>
 
           {/* Contact & Personal Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
               Contact & Personal Information
             </h2>
             
@@ -191,8 +302,8 @@ export default function Profile() {
           </div>
 
           {/* Professional Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
               Professional Information
             </h2>
             
@@ -252,24 +363,24 @@ export default function Profile() {
           <div className="flex space-x-3">
             <button
               type="submit"
-              disabled={loading}
-              className="flex-1 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+              disabled={loading || uploadingPhoto}
+              className="flex-1 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition flex items-center justify-center"
             >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Saving...
-                </span>
-              ) : 'Save Changes'}
+              {loading || uploadingPhoto ? (
+                <>
+                  <Loader className="w-5 h-5 mr-2 animate-spin" />
+                  {uploadingPhoto ? 'Uploading...' : 'Saving...'}
+                </>
+              ) : (
+                'Save Changes'
+              )}
             </button>
             <button
               type="button"
               onClick={() => {
                 setEditMode(false);
-                // Reset form to current profile data
+                setPhotoFile(null);
+                setPhotoPreview(profile.profile_photo_url);
                 if (profile) {
                   setFormData({
                     first_name: profile.first_name || '',
@@ -291,30 +402,38 @@ export default function Profile() {
         </form>
       ) : (
         <div className="space-y-6">
-          {/* Engineer Information Display */}
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-              Engineer Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <span className="text-sm text-gray-500 block mb-1">Full Name</span>
-                <p className="font-medium text-lg">{profile.engineer_name}</p>
+          {/* Profile Photo Display */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <div className="flex items-center space-x-6">
+              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                {profile.profile_photo_url ? (
+                  <img 
+                    src={profile.profile_photo_url} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-gray-400" />
+                )}
               </div>
               <div>
-                <span className="text-sm text-gray-500 block mb-1">Email</span>
-                <p className="text-gray-700">{profile.engineer_email}</p>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500 block mb-1">EBK Registration</span>
-                <p className="font-mono font-medium">{profile.ebk_registration_number || 'Not set'}</p>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {profile.engineer_name}
+                </h2>
+                <p className="text-gray-600">{profile.engineer_email}</p>
+                {profile.ebk_registration_number && (
+                  <p className="text-sm text-gray-500 font-mono mt-1">
+                    {profile.ebk_registration_number}
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Contact Information Display */}
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          {/* Rest of profile display remains the same... */}
+          {/* Engineer Information Display */}
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
               Contact Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -330,8 +449,8 @@ export default function Profile() {
           </div>
 
           {/* Professional Information Display */}
-          <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
               Professional Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

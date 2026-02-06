@@ -40,9 +40,9 @@ export default function Sidebar() {
   const navItems = [
     { name: 'Dashboard', path: '/home', icon: Home },
     { name: 'Profile', path: '/profile', icon: User },
-    { name: 'CPD Activities', path: '/cpd', icon: FileText },
-    { name: 'License Renewal', path: '/renewal', icon: Calendar },
-    { name: 'Reports', path: '/reports', icon: BarChart3 },
+    { name: 'CPD Logging', path: '/cpd-logging', icon: FileText },
+    { name: 'CPD Activities', path: '/cpd', icon: Calendar },
+    { name: 'Reports', path: '/cpd-reports', icon: BarChart3 },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 

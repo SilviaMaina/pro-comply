@@ -10,10 +10,13 @@ import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import AuthLayout from './components/AuthLayout';
 import CompleteProfile from './pages/CompleteProfile';
+import CPDLogging from './pages/CPDLogging';
+import CPDActivitiesList from './pages/CPDActivitiesList';
+import CPDReports  from './pages/CPDReports';
 
 // Placeholder components for routes that don't exist yet
-const CPDActivities = () => <div className="p-8"><h1 className="text-2xl font-bold">CPD Activities - Coming Soon</h1></div>;
-const LicenseRenewal = () => <div className="p-8"><h1 className="text-2xl font-bold">License Renewal - Coming Soon</h1></div>;
+
+
 const Reports = () => <div className="p-8"><h1 className="text-2xl font-bold">Reports - Coming Soon</h1></div>;
 const SettingsPage = () => <div className="p-8"><h1 className="text-2xl font-bold">Settings - Coming Soon</h1></div>;
 
@@ -46,9 +49,9 @@ export default function App() {
         >
           <Route path="/home" element={<HomePage />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/cpd" element={<CPDActivities />} />
-          <Route path="/renewal" element={<LicenseRenewal />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route path="/cpd-logging" element={<CPDLogging />} />
+          <Route path="/cpd" element={<CPDActivitiesList />} />
+          <Route path="/cpd-reports" element={<CPDReports />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
 
