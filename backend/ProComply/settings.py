@@ -14,7 +14,7 @@ from pathlib import Path
 from decouple import config
 import cloudinary
 import os
-
+import dj_database_url
 # Initialize Firebase
 try:
     from . import firebase
@@ -104,6 +104,16 @@ WSGI_APPLICATION = 'ProComply.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+if 'DATABASE_URL' in os.environ:
+    # Production (Render)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ['DATABASE_URL'],
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
 DATABASES = {
     'default': {
         'ENGINE': config('DATABASE_ENGINE'),

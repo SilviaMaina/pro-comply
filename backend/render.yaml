@@ -1,9 +1,8 @@
-# render.yaml
 services:
   - type: web
-    name: ProComply
+    name: pro-comply-backend
     runtime: python
-    region: africa-south
+    region: frankfurt
     envVars:
       - key: DEBUG
         value: False
@@ -11,12 +10,12 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: compliance
+          name: compliance-db
           property: connectionString
       - key: ALLOWED_HOSTS
-        value: your-render-app.onrender.com
+        value: pro-comply.onrender.com
       - key: CORS_ALLOWED_ORIGINS
-        value: https://your-vercel-app.vercel.app,https://www.yourdomain.com
+        value: https://pro-comply.vercel.app
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -27,13 +26,12 @@ services:
         sync: false
       - key: BREVO_SMTP_KEY
         sync: false
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn ProComply.wsgi:application"
+    buildCommand: "powershell ./build.ps1"
+    startCommand: "gunicorn Procomply.wsgi:application"
     healthCheckPath: "/api/accounts/test-auth/"
 
 databases:
-  - name: compliance
-    type: postgresql
+  - name: compliance-db
     databaseName: compliance
     user: postgres
-    region: africa-south
+    region: frankfurt
