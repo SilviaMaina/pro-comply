@@ -7,8 +7,9 @@ const client = axios.create({
 // Add Firebase token to requests
 client.interceptors.request.use(config => {
   const token = localStorage.getItem('firebaseToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  
+  if (token && !config.url.includes('sync-firebase')) {
+  config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
