@@ -114,7 +114,7 @@ if 'DATABASE_URL' in os.environ:
         )
     }
 else:
-DATABASES = {
+    DATABASES = {
     'default': {
         'ENGINE': config('DATABASE_ENGINE'),
         'NAME': config('DATABASE_NAME'),
