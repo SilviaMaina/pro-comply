@@ -15,6 +15,7 @@ from decouple import config
 import cloudinary
 import os
 import dj_database_url
+import sys
 # Initialize Firebase
 try:
     from . import firebase
@@ -179,44 +180,69 @@ cloudinary.config(
     api_secret = config('CLOUDINARY_API_SECRET')
 )
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'INFO',
-    },
-    'loggers': {
-        'accounts': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
-}
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-relay.brevo.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
 
 
+# Email Configuration
+import sys
+
+# Email Configuration
 try:
+    BREVO_SMTP_KEY = config('BREVO_SMTP_KEY')
     EMAIL_HOST_USER = config('BREVO_EMAIL')
-    EMAIL_HOST_PASSWORD = config('BREVO_SMTP_KEY')
+    EMAIL_HOST_PASSWORD = config('BREVO_API_KEY')
     EMAIL_SENDER_NAME = 'Pro-Comply Team'
     DEFAULT_FROM_EMAIL = 'noreply@procomply.co.ke'
-    MAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp-relay.brevo.com'
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
+    
+    # Validate email configuration
+    if not EMAIL_HOST_PASSWORD or not EMAIL_HOST_USER:
+        raise ValueError("Email credentials are not properly configured")
+        
 except Exception as e:
-    print(f"Email configuration error: {e}")
+    error_msg = f"CRITICAL: Email configuration error: {e}"
+    print(error_msg, file=sys.stderr)
+    
+    # In production, fail fast. In development, allow with warnings
+    if not DEBUG:
+        raise RuntimeError(error_msg)
+    else:
+        # Fallback for development
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+        print("WARNING: Using console email backend for development", file=sys.stderr)
+
+
+# Simple Logging Configuration (Console only)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'accounts.service.email_service': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+    },
+}
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
