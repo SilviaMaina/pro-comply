@@ -151,6 +151,8 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTH_USER_MODEL = 'accounts.Engineer'
 
 
+
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'accounts.authentication.FirebaseAuthentication',
@@ -202,10 +204,19 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp-relay.brevo.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config('BREVO_EMAIL')  
-EMAIL_HOST_PASSWORD = config('BREVO_SMTP_KEY')  
-EMAIL_SENDER_NAME = 'Pro-Comply Team'
-DEFAULT_FROM_EMAIL = 'noreply@procomply.co.ke'
+
+
+try:
+    EMAIL_HOST_USER = config('BREVO_EMAIL')
+    EMAIL_HOST_PASSWORD = config('BREVO_SMTP_KEY')
+    EMAIL_SENDER_NAME = 'Pro-Comply Team'
+    DEFAULT_FROM_EMAIL = 'noreply@procomply.co.ke'
+    MAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp-relay.brevo.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+except Exception as e:
+    print(f"Email configuration error: {e}")
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

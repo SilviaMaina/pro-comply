@@ -2,11 +2,11 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import get_user_model
-from users.service.email_service import send_license_expiry_reminder
+from accounts.service.email_service import send_license_expiry_reminder
 import logging
+from accounts.models import UserProfile
 
 logger = logging.getLogger(__name__)
-User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -20,36 +20,37 @@ class Command(BaseCommand):
         thirty_days_from_now = today + timedelta(days=30)
         
         # Find users whose license expires in 60 days
-        users_60_days = User.objects.filter(
+        profiles_60_days = UserProfile.objects.filter(
             license_expiry_date=sixty_days_from_now,
             is_active=True,
-            email__isnull=False
-        ).exclude(email='')
+            user__email__isnull=False
+        ).exclude(engineer__email='')
         
+
         # Find users whose license expires in 30 days
-        users_30_days = User.objects.filter(
+        profiles_30_days = UserProfile.objects.filter(
             license_expiry_date=thirty_days_from_now,
             is_active=True,
-            email__isnull=False
-        ).exclude(email='')
+            user__email__isnull=False
+        ).exclude(engineer__email='')
         
         # Send 60-day reminders
         sent_60 = 0
-        for user in users_60_days:
+        for profile in profiles_60_days:
             try:
-                send_license_expiry_reminder(user, 60)
+                send_license_expiry_reminder(profile, 60)
                 sent_60 += 1
             except Exception as e:
-                logger.error(f"Failed to send 60-day reminder to {user.email}: {str(e)}")
+                logger.error(f"Failed to send 60-day reminder to {profile.engineer.email}: {str(e)}")
         
         # Send 30-day reminders
         sent_30 = 0
-        for user in users_30_days:
+        for profile in profiles_30_days:
             try:
-                send_license_expiry_reminder(user, 30)
+                send_license_expiry_reminder(profile, 30)
                 sent_30 += 1
             except Exception as e:
-                logger.error(f"Failed to send 30-day reminder to {user.email}: {str(e)}")
+                logger.error(f"Failed to send 30-day reminder to {profile.engineer.email}: {str(e)}")
         
         self.stdout.write(
             self.style.SUCCESS(
