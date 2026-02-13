@@ -141,7 +141,7 @@ export default function HomePage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {engineerName}!
+            Welcome back, {engineer.first_name}!
           </h1>
           <p className="mt-2 text-gray-900">
             Here's your CPD progress overview
