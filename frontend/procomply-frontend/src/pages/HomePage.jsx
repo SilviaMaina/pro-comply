@@ -132,15 +132,18 @@ export default function HomePage() {
   const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-600';
   const textTertiaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
 
+  // Get engineer's first name
+  const engineerName = profile.first_name || 'Engineer';
+
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Header - Always black text */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className={`text-3xl font-bold ${textPrimaryClass}`}>
-            Welcome back, {profile.first_name} {profile.last_name}!
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {engineerName}!
           </h1>
-          <p className={`mt-2 ${textSecondaryClass}`}>
+          <p className="mt-2 text-gray-900">
             Here's your CPD progress overview
           </p>
         </div>
