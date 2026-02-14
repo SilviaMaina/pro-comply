@@ -484,7 +484,9 @@ export default function Profile() {
               </div>
               <div>
                 <h2 className={`text-2xl font-bold ${textPrimaryClass}`}>
-                  {engineerFullName}
+                  {profile.first_name && profile.last_name
+                    ? `${profile.first_name} ${profile.last_name}`
+                    : 'Engineer'}
                 </h2>
                 <p className={textSecondaryClass}>{profile.email}</p>
                 {profile.ebk_registration_number && (
