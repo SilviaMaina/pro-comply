@@ -443,8 +443,8 @@ export default function Profile() {
                 setPhotoPreview(profile.profile_photo_url);
                 if (profile) {
                   setFormData({
-                    first_name: profile.first_name || '',
-                    last_name: profile.last_name || '',
+                    first_name: formData.first_name || '',
+                    last_name: formData.last_name || '',
                     ebk_registration_number: profile.ebk_registration_number || '',
                     phone_number: profile.phone_number || '',
                     national_id: profile.national_id || '',
