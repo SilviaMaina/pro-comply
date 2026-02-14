@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useProfileStore } from '../context/UseProfileStore';
+import { useThemeStore } from '../context/useThemeStore';
 import { Camera, Upload, X, User, Loader } from 'lucide-react';
 import client from '../api/client';
 
@@ -15,15 +16,15 @@ export default function Profile() {
   const [formData, setFormData] = useState({});
   const [editMode, setEditMode] = useState(false);
   const [photoFile, setPhotoFile] = useState(null);
+  const { isDarkMode } = useThemeStore();
+
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Fetch profile on mount
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
-  // Update form data when profile loads
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -47,13 +48,11 @@ export default function Profile() {
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         alert('Please select an image file');
         return;
       }
 
-      // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
         alert('Image size must be less than 5MB');
         return;
@@ -61,7 +60,6 @@ export default function Profile() {
 
       setPhotoFile(file);
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result);
@@ -89,17 +87,14 @@ export default function Profile() {
     setUploadingPhoto(true);
     
     try {
-      // Create FormData for file upload
       const submitData = new FormData();
       
-      // Add all form fields
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null && formData[key] !== '') {
           submitData.append(key, formData[key]);
         }
       });
       
-      // Add photo if selected
       if (photoFile) {
         submitData.append('profile_photo', photoFile);
       }
@@ -116,10 +111,24 @@ export default function Profile() {
     }
   };
 
+  const cardClass = isDarkMode
+    ? 'bg-gray-800 border-gray-700 shadow-lg'
+    : 'bg-white border-gray-200 shadow-sm';
+
+  const textPrimaryClass = isDarkMode ? 'text-white' : 'text-gray-900';
+  const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-600';
+  const textTertiaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+  
+  const inputClass = isDarkMode
+    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
+    : 'bg-white border-gray-300 text-gray-900';
+
   if (loading && !profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
+          isDarkMode ? 'border-indigo-400' : 'border-indigo-600'
+        }`}></div>
       </div>
     );
   }
@@ -127,11 +136,15 @@ export default function Profile() {
   if (error && !profile) {
     return (
       <div className="p-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <p className="text-red-800">{error}</p>
+        <div className={`border rounded-lg p-6 ${
+          isDarkMode 
+            ? 'bg-red-900 border-red-700' 
+            : 'bg-red-50 border-red-200'
+        }`}>
+          <p className={isDarkMode ? 'text-red-200' : 'text-red-800'}>{error}</p>
           <button
             onClick={fetchProfile}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg"
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
             Retry
           </button>
@@ -141,12 +154,17 @@ export default function Profile() {
   }
 
   if (!profile) {
-    return <div className="p-8">No profile data.</div>;
+    return <div className={`p-8 ${textPrimaryClass}`}>No profile data.</div>;
   }
+
+  // Get engineer's full name from formData (when editing) or profile (when viewing)
+  const engineerFullName = editMode 
+    ? `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || 'Engineer'
+    : `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Engineer';
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Header - Always black text */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
         {!editMode && (
@@ -162,13 +180,15 @@ export default function Profile() {
       {editMode ? (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Profile Photo Upload */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Profile Photo</h2>
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <h2 className={`text-xl font-semibold mb-4 ${textPrimaryClass}`}>Profile Photo</h2>
             
             <div className="flex flex-col md:flex-row items-center gap-6">
               {/* Photo Preview */}
               <div className="relative">
-                <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                <div className={`w-32 h-32 rounded-full overflow-hidden flex items-center justify-center ${
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                }`}>
                   {photoPreview ? (
                     <img 
                       src={photoPreview} 
@@ -176,7 +196,7 @@ export default function Profile() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User className="w-16 h-16 text-gray-400" />
+                    <User className={`w-16 h-16 ${textTertiaryClass}`} />
                   )}
                 </div>
                 {photoPreview && (
@@ -193,9 +213,13 @@ export default function Profile() {
               {/* Upload Controls */}
               <div className="flex-1">
                 <label className="cursor-pointer">
-                  <div className="flex items-center space-x-2 px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition w-fit">
-                    <Camera className="w-5 h-5 text-gray-600" />
-                    <span className="text-gray-700">Choose Photo</span>
+                  <div className={`flex items-center space-x-2 px-4 py-2 border rounded-lg transition w-fit ${
+                    isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 hover:bg-gray-600' 
+                      : 'bg-gray-100 border-gray-300 hover:bg-gray-200'
+                  }`}>
+                    <Camera className={`w-5 h-5 ${textSecondaryClass}`} />
+                    <span className={textSecondaryClass}>Choose Photo</span>
                   </div>
                   <input
                     type="file"
@@ -204,7 +228,7 @@ export default function Profile() {
                     className="hidden"
                   />
                 </label>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className={`text-sm mt-2 ${textTertiaryClass}`}>
                   JPG, PNG or GIF. Max size 5MB.
                 </p>
                 {photoFile && (
@@ -214,51 +238,83 @@ export default function Profile() {
                 )}
               </div>
             </div>
+
+            {/* Display Engineer Name while editing */}
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <div className="flex items-center space-x-4">
+                <div className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center ${
+                  isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                }`}>
+                  {photoPreview ? (
+                    <img 
+                      src={photoPreview} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className={`w-8 h-8 ${textTertiaryClass}`} />
+                  )}
+                </div>
+                <div>
+                  <h3 className={`text-lg font-bold ${textPrimaryClass}`}>
+                    {engineerFullName}
+                  </h3>
+                  <p className={textSecondaryClass}>{profile.email}</p>
+                  {formData.ebk_registration_number && (
+                    <p className={`text-sm font-mono mt-1 ${textTertiaryClass}`}>
+                      {formData.ebk_registration_number}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Engineer Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <h2 className={`text-xl font-semibold mb-4 pb-2 border-b ${textPrimaryClass} ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               Engineer Information
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   First Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="first_name"
                   value={formData.first_name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                   required
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   Last Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   name="last_name"
                   value={formData.last_name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                   required
                 />
               </div>
             </div>
 
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                 EBK Registration Number <span className="text-red-500">*</span>
               </label>
               <input
                 name="ebk_registration_number"
                 value={formData.ebk_registration_number}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono ${inputClass}`}
                 placeholder="EBK/2020/12345"
                 required
               />
@@ -266,27 +322,29 @@ export default function Profile() {
           </div>
 
           {/* Contact & Personal Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <h2 className={`text-xl font-semibold mb-4 pb-2 border-b ${textPrimaryClass} ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               Contact & Personal Information
             </h2>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   Phone Number
                 </label>
                 <input
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                   placeholder="+254712345678"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   National ID
                 </label>
                 <input
@@ -294,7 +352,7 @@ export default function Profile() {
                   value={formData.national_id}
                   onChange={handleChange}
                   maxLength="8"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                   placeholder="12345678"
                 />
               </div>
@@ -302,21 +360,23 @@ export default function Profile() {
           </div>
 
           {/* Professional Information Section */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <h2 className={`text-xl font-semibold mb-4 pb-2 border-b ${textPrimaryClass} ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               Professional Information
             </h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   Engineering Specialization
                 </label>
                 <select
                   name="engineering_specialization"
                   value={formData.engineering_specialization}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                 >
                   <option value="">Select Specialization</option>
                   <option value="Electrical Engineering">Electrical Engineering</option>
@@ -331,7 +391,7 @@ export default function Profile() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   License Expiry Date
                 </label>
                 <input
@@ -339,12 +399,12 @@ export default function Profile() {
                   type="date"
                   value={formData.license_expiry_date}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                   PDU Units Earned
                 </label>
                 <input
@@ -353,7 +413,7 @@ export default function Profile() {
                   min="0"
                   value={formData.pdu_units_earned}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${inputClass}`}
                 />
               </div>
             </div>
@@ -394,7 +454,11 @@ export default function Profile() {
                   });
                 }
               }}
-              className="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium transition"
+              className={`px-6 py-3 rounded-lg font-medium transition ${
+                isDarkMode 
+                  ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' 
+                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+              }`}
             >
               Cancel
             </button>
@@ -403,9 +467,11 @@ export default function Profile() {
       ) : (
         <div className="space-y-6">
           {/* Profile Photo Display */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
             <div className="flex items-center space-x-6">
-              <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+              <div className={`w-24 h-24 rounded-full overflow-hidden flex items-center justify-center ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+              }`}>
                 {profile.profile_photo_url ? (
                   <img 
                     src={profile.profile_photo_url} 
@@ -413,16 +479,16 @@ export default function Profile() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User className="w-12 h-12 text-gray-400" />
+                  <User className={`w-12 h-12 ${textTertiaryClass}`} />
                 )}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {profile.engineer_name}
+                <h2 className={`text-2xl font-bold ${textPrimaryClass}`}>
+                  {engineerFullName}
                 </h2>
-                <p className="text-gray-600">{profile.engineer_email}</p>
+                <p className={textSecondaryClass}>{profile.email}</p>
                 {profile.ebk_registration_number && (
-                  <p className="text-sm text-gray-500 font-mono mt-1">
+                  <p className={`text-sm font-mono mt-1 ${textTertiaryClass}`}>
                     {profile.ebk_registration_number}
                   </p>
                 )}
@@ -430,36 +496,39 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Rest of profile display remains the same... */}
-          {/* Engineer Information Display */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
+          {/* Contact Information Display */}
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <h2 className={`text-xl font-semibold mb-4 pb-2 border-b ${textPrimaryClass} ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               Contact Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <span className="text-sm text-gray-500 block mb-1">Phone Number</span>
-                <p className="text-gray-700">{profile.phone_number || 'Not set'}</p>
+                <span className={`text-sm block mb-1 ${textTertiaryClass}`}>Phone Number</span>
+                <p className={textSecondaryClass}>{profile.phone_number || 'Not set'}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-500 block mb-1">National ID</span>
-                <p className="text-gray-700">{profile.national_id || 'Not set'}</p>
+                <span className={`text-sm block mb-1 ${textTertiaryClass}`}>National ID</span>
+                <p className={textSecondaryClass}>{profile.national_id || 'Not set'}</p>
               </div>
             </div>
           </div>
 
           {/* Professional Information Display */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 pb-2 border-b">
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <h2 className={`text-xl font-semibold mb-4 pb-2 border-b ${textPrimaryClass} ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               Professional Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <span className="text-sm text-gray-500 block mb-1">Specialization</span>
-                <p className="text-gray-700">{profile.engineering_specialization || 'Not set'}</p>
+                <span className={`text-sm block mb-1 ${textTertiaryClass}`}>Specialization</span>
+                <p className={textSecondaryClass}>{profile.engineering_specialization || 'Not set'}</p>
               </div>
               <div>
-                <span className="text-sm text-gray-500 block mb-1">License Status</span>
+                <span className={`text-sm block mb-1 ${textTertiaryClass}`}>License Status</span>
                 <p className={`font-medium inline-flex items-center px-3 py-1 rounded-full text-sm ${
                   profile.license_status === 'Valid' ? 'bg-green-100 text-green-800' :
                   profile.license_status === 'Expiring Soon' ? 'bg-yellow-100 text-yellow-800' :
@@ -469,26 +538,28 @@ export default function Profile() {
                 </p>
               </div>
               <div>
-                <span className="text-sm text-gray-500 block mb-1">PDU Credits</span>
+                <span className={`text-sm block mb-1 ${textTertiaryClass}`}>PDU Credits</span>
                 <div className="flex items-center">
-                  <p className="text-gray-700 mr-2">
+                  <p className={`mr-2 ${textSecondaryClass}`}>
                     {profile.pdu_units_earned} / {profile.pdu_units_required}
                   </p>
-                  <div className="flex-1 bg-gray-200 rounded-full h-2.5 max-w-xs">
+                  <div className={`flex-1 rounded-full h-2.5 max-w-xs ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
+                  }`}>
                     <div 
                       className="bg-indigo-600 h-2.5 rounded-full" 
                       style={{width: `${(profile.pdu_units_earned / profile.pdu_units_required) * 100}%`}}
                     ></div>
                   </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className={`text-xs mt-1 ${textTertiaryClass}`}>
                   {profile.pdu_units_remaining} units remaining
                 </p>
               </div>
               {profile.license_expiry_date && (
                 <div>
-                  <span className="text-sm text-gray-500 block mb-1">License Expiry</span>
-                  <p className="text-gray-700">
+                  <span className={`text-sm block mb-1 ${textTertiaryClass}`}>License Expiry</span>
+                  <p className={textSecondaryClass}>
                     {new Date(profile.license_expiry_date).toLocaleDateString()}
                   </p>
                 </div>
