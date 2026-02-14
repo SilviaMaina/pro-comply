@@ -181,7 +181,7 @@ export default function CPDLogging() {
           <ArrowLeft className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Log CPD Activity</h1>
+          <h1 className="text-3xl font-bold text-white">Log CPD Activity</h1>
           <p className="mt-2 text-white">
             Record your continuing professional development activities
           </p>

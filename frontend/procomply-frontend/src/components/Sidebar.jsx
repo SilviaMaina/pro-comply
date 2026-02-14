@@ -233,16 +233,7 @@ export default function Sidebar() {
           </button>
         </div>
 
-        {/* Version Info */}
-        {!isCollapsed && (
-          <div className={`p-4 text-center text-xs ${
-            isDarkMode 
-              ? 'text-gray-500 border-t border-gray-700' 
-              : 'text-gray-400 border-t border-gray-200'
-          }`}>
-            v1.0.0
-          </div>
-        )}
+        
       </aside>
     </>
   );
