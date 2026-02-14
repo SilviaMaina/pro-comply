@@ -61,7 +61,7 @@ export default function Sidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={toggleSidebar}
-        className={`lg:hidden fixed top-4 left-2 z-50 p-3 rounded-lg shadow-lg transition-colors ${
+        className={`lg:hidden fixed top-1 left-1 z-50  pr-5 rounded-lg shadow-lg transition-colors ${
           isDarkMode
             ? 'bg-gray-800 text-white hover:bg-gray-700'
             : 'bg-indigo-600 text-white hover:bg-indigo-700'
