@@ -164,9 +164,9 @@ export default function Profile() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Header - Always black text */}
+      
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">My Profile</h1>
+        <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-bold`}>My Profile</h1>
         {!editMode && (
           <button
             onClick={() => setEditMode(true)}

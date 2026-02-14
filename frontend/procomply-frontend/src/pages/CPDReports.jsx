@@ -171,8 +171,8 @@ export default function CPDReports() {
       <div className="print:hidden">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">CPD Activities Report</h1>
-            <p className="mt-2 text-white">
+            <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-bold`}>CPD Activities Report</h1>
+            <p className={`mt-2 ${textSecondaryClass}`}>
               Comprehensive report of all CPD activities
             </p>
           </div>

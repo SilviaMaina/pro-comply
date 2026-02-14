@@ -148,8 +148,8 @@ export default function CPDActivitiesList() {
       {/* Header - Always black text */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">CPD Activities</h1>
-          <p className="mt-2 text-white">
+          <h1 className={`${isDarkMode ? 'text-white' : 'text-gray-900'} text-3xl font-bold`}>CPD Activities</h1>
+          <p className={`mt-2 ${textSecondaryClass}`}>
             View and manage your Continuing Professional Development activities
           </p>
         </div>
