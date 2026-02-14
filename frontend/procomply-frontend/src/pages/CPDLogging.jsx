@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCPDStore } from '../context/UseCPDStore';
+import { useThemeStore } from '../context/useThemeStore';
 import { X, Upload, Loader, AlertCircle, CheckCircle, ArrowLeft, FileText } from 'lucide-react';
 
 export default function CPDLogging() {
   const navigate = useNavigate();
+  const { isDarkMode } = useThemeStore();
   const { createActivity, loading } = useCPDStore();
   
   const [formData, setFormData] = useState({
@@ -30,6 +32,13 @@ export default function CPDLogging() {
     { value: 'INFORMAL', label: 'Informal (Self-Study, Conferences)', maxPDUs: 10, description: 'Self-directed learning, conferences' },
     { value: 'ACCREDITED_PROVIDER', label: 'Accredited Service Provider', maxPDUs: 25, description: 'Courses from accredited institutions' },
   ];
+
+  const cardClass = isDarkMode 
+    ? 'bg-gray-800 border-gray-700 shadow-lg' 
+    : 'bg-white border-gray-200 shadow-sm';
+  
+  const textPrimaryClass = isDarkMode ? 'text-white' : 'text-gray-900';
+  const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-700';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -137,7 +146,6 @@ export default function CPDLogging() {
       await createActivity(submitData);
       setSubmitSuccess(true);
       
-      // Reset form
       setFormData({
         title: '',
         description: '',
@@ -148,7 +156,6 @@ export default function CPDLogging() {
       });
       setFilePreview(null);
 
-      // Navigate after 2 seconds
       setTimeout(() => {
         navigate('/cpd');
       }, 2000);
@@ -163,17 +170,19 @@ export default function CPDLogging() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Header */}
+      {/* Header - Always black text */}
       <div className="flex items-center space-x-4">
         <button
           onClick={() => navigate('/cpd')}
-          className="p-2 hover:bg-gray-100 rounded-lg transition"
+          className={`p-2 rounded-lg transition ${
+            isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+          }`}
         >
-          <ArrowLeft className="w-6 h-6 text-gray-600" />
+          <ArrowLeft className={`w-6 h-6 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
         </button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Log CPD Activity</h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-gray-900">
             Record your continuing professional development activities
           </p>
         </div>
@@ -181,12 +190,18 @@ export default function CPDLogging() {
 
       {/* Success Message */}
       {submitSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className={`border rounded-lg p-4 ${
+          isDarkMode 
+            ? 'bg-green-900 border-green-700' 
+            : 'bg-green-50 border-green-200'
+        }`}>
           <div className="flex items-start">
             <CheckCircle className="w-5 h-5 text-green-600 mr-3 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
-              <h3 className="text-green-800 font-semibold">Activity logged successfully!</h3>
-              <p className="text-green-700 text-sm mt-1">
+              <h3 className={`font-semibold ${isDarkMode ? 'text-green-200' : 'text-green-800'}`}>
+                Activity logged successfully!
+              </h3>
+              <p className={`text-sm mt-1 ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>
                 Your activity has been submitted and validated. Redirecting to activities list...
               </p>
             </div>
@@ -195,10 +210,14 @@ export default function CPDLogging() {
       )}
 
       {/* Form */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className={`rounded-lg border p-6 ${cardClass}`}>
         <form onSubmit={handleSubmit} className="space-y-6">
           {submitError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start">
+            <div className={`border px-4 py-3 rounded-lg flex items-start ${
+              isDarkMode 
+                ? 'bg-red-900 border-red-700 text-red-200' 
+                : 'bg-red-50 border-red-200 text-red-700'
+            }`}>
               <AlertCircle className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" />
               <span>{submitError}</span>
             </div>
@@ -206,7 +225,7 @@ export default function CPDLogging() {
 
           {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
               Activity Title <span className="text-red-500">*</span>
             </label>
             <input
@@ -216,7 +235,11 @@ export default function CPDLogging() {
               onChange={handleChange}
               placeholder="e.g., Advanced Project Management Workshop"
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                errors.title ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                errors.title 
+                  ? 'border-red-300 bg-red-50' 
+                  : isDarkMode
+                  ? 'bg-gray-700 border-gray-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
               }`}
               disabled={loading}
             />
@@ -230,7 +253,7 @@ export default function CPDLogging() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
               Description <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -240,7 +263,11 @@ export default function CPDLogging() {
               rows={5}
               placeholder="Describe what you learned, skills gained, and how this activity contributes to your professional development..."
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                errors.description ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                errors.description 
+                  ? 'border-red-300 bg-red-50' 
+                  : isDarkMode
+                  ? 'bg-gray-700 border-gray-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
               }`}
               disabled={loading}
             />
@@ -250,14 +277,14 @@ export default function CPDLogging() {
                 {errors.description}
               </p>
             )}
-            <p className="mt-1 text-sm text-gray-500">
+            <p className={`mt-1 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
               {formData.description.length}/500 characters
             </p>
           </div>
 
           {/* Activity Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
               Activity Type <span className="text-red-500">*</span>
             </label>
             <select
@@ -265,7 +292,11 @@ export default function CPDLogging() {
               value={formData.activity_type}
               onChange={handleChange}
               className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                errors.activity_type ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                errors.activity_type 
+                  ? 'border-red-300 bg-red-50' 
+                  : isDarkMode
+                  ? 'bg-gray-700 border-gray-600 text-white'
+                  : 'bg-white border-gray-300 text-gray-900'
               }`}
               disabled={loading}
             >
@@ -283,11 +314,15 @@ export default function CPDLogging() {
               </p>
             )}
             {selectedTypeInfo && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className={`mt-2 p-3 border rounded-lg ${
+                isDarkMode 
+                  ? 'bg-blue-900 border-blue-700' 
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <p className={`text-sm ${isDarkMode ? 'text-blue-200' : 'text-blue-800'}`}>
                   <strong>Category Info:</strong> {selectedTypeInfo.description}
                 </p>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className={`text-sm mt-1 ${isDarkMode ? 'text-blue-300' : 'text-blue-700'}`}>
                   Maximum {selectedTypeInfo.maxPDUs} PDUs per year for this category
                 </p>
               </div>
@@ -297,7 +332,7 @@ export default function CPDLogging() {
           {/* Date and Hours */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                 Date Completed <span className="text-red-500">*</span>
               </label>
               <input
@@ -307,7 +342,11 @@ export default function CPDLogging() {
                 onChange={handleChange}
                 max={new Date().toISOString().split('T')[0]}
                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.date_completed ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  errors.date_completed 
+                    ? 'border-red-300 bg-red-50' 
+                    : isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
                 }`}
                 disabled={loading}
               />
@@ -320,7 +359,7 @@ export default function CPDLogging() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
                 Hours Spent <span className="text-red-500">*</span>
               </label>
               <input
@@ -332,7 +371,11 @@ export default function CPDLogging() {
                 max="1000"
                 placeholder="e.g., 8"
                 className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
-                  errors.hours_spent ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  errors.hours_spent 
+                    ? 'border-red-300 bg-red-50' 
+                    : isDarkMode
+                    ? 'bg-gray-700 border-gray-600 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
                 }`}
                 disabled={loading}
               />
@@ -347,19 +390,23 @@ export default function CPDLogging() {
 
           {/* File Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>
               Supporting Document (Certificate/Proof)
             </label>
             
             {!filePreview ? (
               <div className="mt-1">
-                <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                <label className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition ${
+                  isDarkMode 
+                    ? 'border-gray-600 hover:bg-gray-700' 
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}>
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <Upload className="w-12 h-12 text-gray-400 mb-3" />
-                    <p className="text-sm text-gray-600 mb-1">
+                    <Upload className={`w-12 h-12 mb-3 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                    <p className={`text-sm mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                       <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       PDF, JPG, or PNG (max 5MB)
                     </p>
                   </div>
@@ -373,18 +420,26 @@ export default function CPDLogging() {
                 </label>
               </div>
             ) : (
-              <div className="mt-1 flex items-center justify-between p-4 bg-gray-50 border border-gray-300 rounded-lg">
+              <div className={`mt-1 flex items-center justify-between p-4 border rounded-lg ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600' 
+                  : 'bg-gray-50 border-gray-300'
+              }`}>
                 <div className="flex items-center space-x-3">
                   <FileText className="w-8 h-8 text-indigo-600" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">{filePreview}</p>
-                    <p className="text-xs text-gray-500">Ready to upload</p>
+                    <p className={`text-sm font-medium ${textPrimaryClass}`}>{filePreview}</p>
+                    <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Ready to upload</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={removeFile}
-                  className="text-red-600 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition"
+                  className={`p-2 rounded-lg transition ${
+                    isDarkMode 
+                      ? 'text-red-400 hover:bg-red-900' 
+                      : 'text-red-600 hover:bg-red-50'
+                  }`}
                   disabled={loading}
                 >
                   <X className="w-5 h-5" />
@@ -401,12 +456,20 @@ export default function CPDLogging() {
           </div>
 
           {/* Info Box */}
-          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-            <h4 className="text-sm font-semibold text-indigo-900 mb-2 flex items-center">
+          <div className={`border rounded-lg p-4 ${
+            isDarkMode 
+              ? 'bg-indigo-900 border-indigo-700' 
+              : 'bg-indigo-50 border-indigo-200'
+          }`}>
+            <h4 className={`text-sm font-semibold mb-2 flex items-center ${
+              isDarkMode ? 'text-indigo-200' : 'text-indigo-900'
+            }`}>
               <AlertCircle className="w-4 h-4 mr-2" />
               PDU Calculation & Validation
             </h4>
-            <ul className="text-sm text-indigo-800 space-y-1 ml-6 list-disc">
+            <ul className={`text-sm space-y-1 ml-6 list-disc ${
+              isDarkMode ? 'text-indigo-300' : 'text-indigo-800'
+            }`}>
               <li>PDUs are automatically calculated based on EBK guidelines</li>
               <li>Activities are validated against annual category limits</li>
               <li>Maximum 50 PDUs per year (40 structured + 10 unstructured)</li>
@@ -416,11 +479,17 @@ export default function CPDLogging() {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-6 border-t">
+          <div className={`flex items-center justify-end space-x-3 pt-6 border-t ${
+            isDarkMode ? 'border-gray-700' : 'border-gray-200'
+          }`}>
             <button
               type="button"
               onClick={() => navigate('/cpd')}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              className={`px-6 py-3 border rounded-lg transition ${
+                isDarkMode 
+                  ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
               disabled={loading}
             >
               Cancel

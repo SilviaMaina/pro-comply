@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCPDStore } from '../context/UseCPDStore';
+import { useThemeStore } from '../context/useThemeStore';
 import {
   FileText, Download, Calendar, Filter, RefreshCw, 
   AlertCircle, ChevronDown, ChevronUp, Printer
@@ -16,6 +17,7 @@ const activityTypeLabels = {
 };
 
 export default function CPDReports() {
+  const { isDarkMode } = useThemeStore();
   const { activities, loading, error, fetchActivities, downloadReport } = useCPDStore();
   
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -27,7 +29,14 @@ export default function CPDReports() {
   const [sortDirection, setSortDirection] = useState('desc');
   const [expandedRows, setExpandedRows] = useState(new Set());
 
-  // Load activities on mount
+  const cardClass = isDarkMode 
+    ? 'bg-gray-800 border-gray-700 shadow-lg' 
+    : 'bg-white border-gray-200 shadow-sm';
+  
+  const textPrimaryClass = isDarkMode ? 'text-white' : 'text-gray-900';
+  const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-600';
+  const textTertiaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+
   useEffect(() => {
     const loadActivities = async () => {
       try {
@@ -37,9 +46,8 @@ export default function CPDReports() {
       }
     };
     loadActivities();
-  }, []); // Only run once on mount
+  }, []);
 
-  // Filter activities
   const filteredActivities = activities.filter(activity => {
     const matchesType = filterType === 'ALL' || activity.activity_type === filterType;
     const matchesStatus = filterStatus === 'ALL' || activity.status === filterStatus;
@@ -47,7 +55,6 @@ export default function CPDReports() {
     return matchesType && matchesStatus && matchesYear;
   });
 
-  // Sort activities
   const sortedActivities = [...filteredActivities].sort((a, b) => {
     let aValue, bValue;
     
@@ -77,7 +84,6 @@ export default function CPDReports() {
     return 0;
   });
 
-  // Handle sort
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -87,7 +93,6 @@ export default function CPDReports() {
     }
   };
 
-  // Handle download
   const handleDownload = async () => {
     if (!activities?.length) {
       alert('No activities to download');
@@ -96,7 +101,6 @@ export default function CPDReports() {
     
     setIsDownloading(true);
     try {
-      // ✅ FIXED: Pass selectedYear as parameter
       await downloadReport(selectedYear);
     } catch (err) {
       console.error('Download error:', err);
@@ -106,7 +110,6 @@ export default function CPDReports() {
     }
   };
 
-  // Handle refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -119,12 +122,10 @@ export default function CPDReports() {
     }
   };
 
-  // Handle print
   const handlePrint = () => {
     window.print();
   };
 
-  // Toggle row expansion
   const toggleRowExpansion = (id) => {
     setExpandedRows(prev => {
       const newSet = new Set(prev);
@@ -137,7 +138,6 @@ export default function CPDReports() {
     });
   };
 
-  // Render sort icon
   const renderSortIcon = (field) => {
     if (sortField !== field) return null;
     return sortDirection === 'asc' ? 
@@ -145,7 +145,6 @@ export default function CPDReports() {
       <ChevronDown className="w-4 h-4 inline ml-1" />;
   };
 
-  // Calculate statistics
   const totalActivities = sortedActivities.length;
   const approvedCount = sortedActivities.filter(a => a.status === 'APPROVED').length;
   const rejectedCount = sortedActivities.filter(a => a.status === 'REJECTED').length;
@@ -153,13 +152,14 @@ export default function CPDReports() {
     .filter(a => a.status === 'APPROVED')
     .reduce((sum, a) => sum + a.pdu_units_awarded, 0);
 
-  // Loading state
   if (loading && !activities.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading report data...</p>
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mx-auto ${
+            isDarkMode ? 'border-indigo-400' : 'border-indigo-600'
+          }`}></div>
+          <p className={`mt-4 ${textSecondaryClass}`}>Loading report data...</p>
         </div>
       </div>
     );
@@ -167,12 +167,12 @@ export default function CPDReports() {
 
   return (
     <div className="space-y-6 print:space-y-4">
-      {/* Header - Hidden on print */}
+      {/* Header - Hidden on print, Always black text */}
       <div className="print:hidden">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">CPD Activities Report</h1>
-            <p className="mt-2 text-gray-600">
+            <p className="mt-2 text-gray-900">
               Comprehensive report of all CPD activities
             </p>
           </div>
@@ -180,14 +180,14 @@ export default function CPDReports() {
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50"
             >
               <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
             </button>
             <button
               onClick={handlePrint}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
             >
               <Printer className="w-5 h-5" />
               <span>Print</span>
@@ -195,7 +195,7 @@ export default function CPDReports() {
             <button
               onClick={handleDownload}
               disabled={isDownloading || !activities?.length}
-              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
               <span>{isDownloading ? 'Downloading...' : 'Download PDF'}</span>
@@ -205,12 +205,18 @@ export default function CPDReports() {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
+          <div className={`border rounded-lg p-4 mt-4 ${
+            isDarkMode 
+              ? 'bg-red-900 border-red-700' 
+              : 'bg-red-50 border-red-200'
+          }`}>
             <div className="flex items-start">
               <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-red-800 text-sm">{error}</p>
-                <button onClick={handleRefresh} className="mt-2 text-sm text-red-700 underline hover:text-red-800">
+                <p className={`text-sm ${isDarkMode ? 'text-red-200' : 'text-red-800'}`}>{error}</p>
+                <button onClick={handleRefresh} className={`mt-2 text-sm underline ${
+                  isDarkMode ? 'text-red-300 hover:text-red-200' : 'text-red-700 hover:text-red-800'
+                }`}>
                   Try again
                 </button>
               </div>
@@ -220,42 +226,46 @@ export default function CPDReports() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-sm font-medium text-gray-600">Total Activities</p>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{totalActivities}</p>
-            <p className="text-xs text-gray-500 mt-1">{selectedYear}</p>
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <p className={`text-sm font-medium ${textSecondaryClass}`}>Total Activities</p>
+            <p className={`mt-2 text-3xl font-bold ${textPrimaryClass}`}>{totalActivities}</p>
+            <p className={`text-xs mt-1 ${textTertiaryClass}`}>{selectedYear}</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-sm font-medium text-gray-600">Approved</p>
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <p className={`text-sm font-medium ${textSecondaryClass}`}>Approved</p>
             <p className="mt-2 text-3xl font-bold text-green-600">{approvedCount}</p>
-            <p className="text-xs text-gray-500 mt-1">{approvedCount} activities</p>
+            <p className={`text-xs mt-1 ${textTertiaryClass}`}>{approvedCount} activities</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-sm font-medium text-gray-600">Rejected</p>
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <p className={`text-sm font-medium ${textSecondaryClass}`}>Rejected</p>
             <p className="mt-2 text-3xl font-bold text-red-600">{rejectedCount}</p>
-            <p className="text-xs text-gray-500 mt-1">{rejectedCount} activities</p>
+            <p className={`text-xs mt-1 ${textTertiaryClass}`}>{rejectedCount} activities</p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <p className="text-sm font-medium text-gray-600">Total PDUs</p>
+          <div className={`p-6 rounded-lg border ${cardClass}`}>
+            <p className={`text-sm font-medium ${textSecondaryClass}`}>Total PDUs</p>
             <p className="mt-2 text-3xl font-bold text-indigo-600">{totalPDUs}</p>
-            <p className="text-xs text-gray-500 mt-1">of 50 required</p>
+            <p className={`text-xs mt-1 ${textTertiaryClass}`}>of 50 required</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className={`p-6 rounded-lg border ${cardClass}`}>
           <div className="flex items-center space-x-2 mb-4">
-            <Filter className="w-5 h-5 text-gray-500" />
-            <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+            <Filter className={`w-5 h-5 ${textTertiaryClass}`} />
+            <h3 className={`text-lg font-semibold ${textPrimaryClass}`}>Filters</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+              <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>Year</label>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 {[2024, 2025, 2026, 2027].map(year => (
                   <option key={year} value={year}>{year}</option>
@@ -264,11 +274,15 @@ export default function CPDReports() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
+              <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>Activity Type</label>
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 <option value="ALL">All Types</option>
                 {Object.entries(activityTypeLabels).map(([code, label]) => (
@@ -278,11 +292,15 @@ export default function CPDReports() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <label className={`block text-sm font-medium mb-1 ${textSecondaryClass}`}>Status</label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white border-gray-300 text-gray-900'
+                }`}
               >
                 <option value="ALL">All Status</option>
                 <option value="APPROVED">Approved</option>
@@ -323,12 +341,14 @@ export default function CPDReports() {
       </div>
 
       {/* Activities Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 print:shadow-none">
+      <div className={`rounded-lg border print:shadow-none ${cardClass}`}>
         {sortedActivities.length === 0 ? (
           <div className="p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No activities found</h3>
-            <p className="text-gray-600">
+            <FileText className={`w-16 h-16 mx-auto mb-4 ${
+              isDarkMode ? 'text-gray-600' : 'text-gray-300'
+            }`} />
+            <h3 className={`text-lg font-medium mb-2 ${textPrimaryClass}`}>No activities found</h3>
+            <p className={textSecondaryClass}>
               {filterType !== 'ALL' || filterStatus !== 'ALL'
                 ? 'Try adjusting your filters'
                 : `No activities recorded for ${selectedYear}`
@@ -338,63 +358,91 @@ export default function CPDReports() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 print:bg-gray-100">
+              <thead className={isDarkMode ? 'bg-gray-700 print:bg-gray-100' : 'bg-gray-50 print:bg-gray-100'}>
                 <tr>
                   <th 
                     onClick={() => handleSort('title')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 print:cursor-default"
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition print:cursor-default ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-600' 
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
                   >
                     Title {renderSortIcon('title')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider print:hidden">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider print:hidden ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>
                     Description
                   </th>
                   <th 
                     onClick={() => handleSort('activity_type')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 print:cursor-default"
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition print:cursor-default ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-600' 
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
                   >
                     Activity Type {renderSortIcon('activity_type')}
                   </th>
                   <th 
                     onClick={() => handleSort('date_completed')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 print:cursor-default"
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition print:cursor-default ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-600' 
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
                   >
                     Date Completed {renderSortIcon('date_completed')}
                   </th>
                   <th 
                     onClick={() => handleSort('status')}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 print:cursor-default"
+                    className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider cursor-pointer transition print:cursor-default ${
+                      isDarkMode 
+                        ? 'text-gray-300 hover:bg-gray-600' 
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
                   >
                     Status {renderSortIcon('status')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>
                     PDUs
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider print:hidden">
+                  <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider print:hidden ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`divide-y ${
+                isDarkMode 
+                  ? 'bg-gray-800 divide-gray-700' 
+                  : 'bg-white divide-gray-200'
+              }`}>
                 {sortedActivities.map((activity) => (
                   <>
-                    <tr key={activity.id} className="hover:bg-gray-50 print:hover:bg-white">
+                    <tr key={activity.id} className={`transition print:hover:bg-white ${
+                      isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                    }`}>
                       <td className="px-6 py-4 whitespace-normal">
-                        <div className="text-sm font-medium text-gray-900">{activity.title}</div>
+                        <div className={`text-sm font-medium ${textPrimaryClass}`}>{activity.title}</div>
                       </td>
                       <td className="px-6 py-4 print:hidden">
-                        <div className="text-sm text-gray-600 max-w-md truncate">
+                        <div className={`text-sm max-w-md truncate ${textSecondaryClass}`}>
                           {activity.description}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">
+                        <span className={`text-sm ${textPrimaryClass}`}>
                           {activityTypeLabels[activity.activity_type] || activity.activity_type}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <Calendar className="w-4 h-4 mr-2 text-gray-400 print:hidden" />
+                        <div className={`flex items-center text-sm ${textPrimaryClass}`}>
+                          <Calendar className={`w-4 h-4 mr-2 print:hidden ${textTertiaryClass}`} />
                           {new Date(activity.date_completed).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -428,29 +476,37 @@ export default function CPDReports() {
                       </td>
                     </tr>
                     {expandedRows.has(activity.id) && (
-                      <tr className="bg-gray-50 print:hidden">
+                      <tr className={`print:hidden ${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                         <td colSpan="7" className="px-6 py-4">
                           <div className="space-y-3">
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-700 mb-1">Description:</h4>
-                              <p className="text-sm text-gray-600">{activity.description}</p>
+                              <h4 className={`text-sm font-semibold mb-1 ${textSecondaryClass}`}>Description:</h4>
+                              <p className={`text-sm ${textSecondaryClass}`}>{activity.description}</p>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <h4 className="text-sm font-semibold text-gray-700">Hours Spent:</h4>
-                                <p className="text-sm text-gray-600">{activity.hours_spent} hours</p>
+                                <h4 className={`text-sm font-semibold ${textSecondaryClass}`}>Hours Spent:</h4>
+                                <p className={`text-sm ${textSecondaryClass}`}>{activity.hours_spent} hours</p>
                               </div>
                               <div>
-                                <h4 className="text-sm font-semibold text-gray-700">Created:</h4>
-                                <p className="text-sm text-gray-600">
+                                <h4 className={`text-sm font-semibold ${textSecondaryClass}`}>Created:</h4>
+                                <p className={`text-sm ${textSecondaryClass}`}>
                                   {new Date(activity.created_at).toLocaleDateString()}
                                 </p>
                               </div>
                             </div>
                             {activity.rejection_reason && (
-                              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <h4 className="text-sm font-semibold text-red-800 mb-1">Rejection Reason:</h4>
-                                <p className="text-sm text-red-700">{activity.rejection_reason}</p>
+                              <div className={`p-3 border rounded-lg ${
+                                isDarkMode 
+                                  ? 'bg-red-900 border-red-700' 
+                                  : 'bg-red-50 border-red-200'
+                              }`}>
+                                <h4 className={`text-sm font-semibold mb-1 ${
+                                  isDarkMode ? 'text-red-200' : 'text-red-800'
+                                }`}>Rejection Reason:</h4>
+                                <p className={`text-sm ${
+                                  isDarkMode ? 'text-red-300' : 'text-red-700'
+                                }`}>{activity.rejection_reason}</p>
                               </div>
                             )}
                             {activity.supporting_document_url && (
