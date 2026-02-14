@@ -160,7 +160,7 @@ export default function Profile() {
   // Get engineer's full name from formData (when editing) or profile (when viewing)
   const engineerFullName = editMode 
     ? `${formData.first_name || ''} ${formData.last_name || ''}`.trim() || 'Engineer'
-    : `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Engineer';
+    : profile.engineer_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Engineer';
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -443,8 +443,8 @@ export default function Profile() {
                 setPhotoPreview(profile.profile_photo_url);
                 if (profile) {
                   setFormData({
-                    first_name: formData.first_name || '',
-                    last_name: formData.last_name || '',
+                    first_name: profile.first_name || '',
+                    last_name: profile.last_name || '',
                     ebk_registration_number: profile.ebk_registration_number || '',
                     phone_number: profile.phone_number || '',
                     national_id: profile.national_id || '',
@@ -484,15 +484,13 @@ export default function Profile() {
               </div>
               <div>
                 <h2 className={`text-2xl font-bold ${textPrimaryClass}`}>
-                  {profile.first_name && profile.last_name
-                    ? `${profile.first_name} ${profile.last_name}`
-                    : 'Engineer'}
+                 {engineerFullName}
                 </h2>
-                <p className={textSecondaryClass}>{profile.email}</p>
+               <p className={textSecondaryClass}>{profile.engineer_email || profile.email}</p>
                 {profile.ebk_registration_number && (
-                  <p className={`text-sm font-mono mt-1 ${textTertiaryClass}`}>
-                    {profile.ebk_registration_number}
-                  </p>
+               <p className={`text-sm font-mono mt-1 ${textTertiaryClass}`}>
+                  {profile.ebk_registration_number}
+               </p>
                 )}
               </div>
             </div>
