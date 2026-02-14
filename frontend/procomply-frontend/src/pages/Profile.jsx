@@ -116,8 +116,8 @@ export default function Profile() {
     : 'bg-white border-gray-200 shadow-sm';
 
   const textPrimaryClass = isDarkMode ? 'text-white' : 'text-gray-900';
-  const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-600';
-  const textTertiaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+  const textSecondaryClass = isDarkMode ? 'text-white' : 'text-gray-600';
+  const textTertiaryClass = isDarkMode ? 'text-white' : 'text-gray-500';
   
   const inputClass = isDarkMode
     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'

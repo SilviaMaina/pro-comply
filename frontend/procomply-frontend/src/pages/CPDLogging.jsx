@@ -38,7 +38,7 @@ export default function CPDLogging() {
     : 'bg-white border-gray-200 shadow-sm';
   
   const textPrimaryClass = isDarkMode ? 'text-white' : 'text-gray-900';
-  const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-700';
+  const textSecondaryClass = isDarkMode ? 'text-white' : 'text-gray-700';
 
   const handleChange = (e) => {
     const { name, value } = e.target;

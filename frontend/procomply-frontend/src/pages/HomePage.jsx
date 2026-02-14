@@ -129,8 +129,8 @@ export default function HomePage() {
     : 'bg-white border-gray-200 shadow-sm';
   
   const textPrimaryClass = isDarkMode ? 'text-white' : 'text-gray-900';
-  const textSecondaryClass = isDarkMode ? 'text-gray-300' : 'text-gray-600';
-  const textTertiaryClass = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+  const textSecondaryClass = isDarkMode ? 'text-white' : 'text-gray-600';
+  const textTertiaryClass = isDarkMode ? 'text-white' : 'text-gray-500';
 
   // Get engineer's first name
   const engineerName = profile.first_name || 'Engineer';
