@@ -149,7 +149,7 @@ export default function CPDActivitiesList() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">CPD Activities</h1>
-          <p className="mt-2 text-gray-900">
+          <p className="mt-2 text-white">
             View and manage your Continuing Professional Development activities
           </p>
         </div>

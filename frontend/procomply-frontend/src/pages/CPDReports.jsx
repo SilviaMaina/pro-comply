@@ -172,7 +172,7 @@ export default function CPDReports() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">CPD Activities Report</h1>
-            <p className="mt-2 text-gray-900">
+            <p className="mt-2 text-white">
               Comprehensive report of all CPD activities
             </p>
           </div>

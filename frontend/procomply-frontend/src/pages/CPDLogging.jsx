@@ -182,7 +182,7 @@ export default function CPDLogging() {
         </button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Log CPD Activity</h1>
-          <p className="mt-2 text-gray-900">
+          <p className="mt-2 text-white">
             Record your continuing professional development activities
           </p>
         </div>
